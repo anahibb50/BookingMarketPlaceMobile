@@ -1,6 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { extractApiData, resolveExtraId } from '../utils/apiHelpers';
+import { extractApiData, normalizeCustomerProfile, resolveExtraId } from '../utils/apiHelpers';
 
 // Base debe terminar en /api/v2. Las rutas son relativas: /auth/login -> .../api/v2/auth/login
 export const API_BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
@@ -207,6 +207,12 @@ export async function listCiudadesNormalized() {
   const list = extractApiData(response);
   if (!Array.isArray(list)) return [];
   return list.map(normalizeCiudad).filter((item) => item.id);
+}
+
+export async function getClienteById(id) {
+  const response = await api.get(`/clientes/${id}`);
+  const data = extractApiData(response);
+  return normalizeCustomerProfile(data);
 }
 
 export async function listLocalizacionesNormalized() {

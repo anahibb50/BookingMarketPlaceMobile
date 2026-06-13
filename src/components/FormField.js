@@ -11,6 +11,7 @@ export function FormField({
   secureTextEntry = false,
   autoCapitalize = 'sentences',
   error,
+  editable = true,
 }) {
   return (
     <View style={styles.wrap}>
@@ -24,10 +25,12 @@ export function FormField({
         keyboardType={keyboardType}
         secureTextEntry={secureTextEntry}
         autoCapitalize={autoCapitalize}
+        editable={editable}
         style={[
           styles.input,
           multiline ? styles.multiline : null,
           error ? styles.inputError : null,
+          !editable ? styles.inputDisabled : null,
         ]}
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -60,6 +63,10 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: colors.red,
+  },
+  inputDisabled: {
+    backgroundColor: colors.surfaceAlt,
+    color: colors.textMuted,
   },
   error: {
     color: colors.red,

@@ -11,9 +11,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { SectionHeader } from '../components/SectionHeader';
-import { getMarketplaceBootstrap, getVehicleById } from '../services/marketplaceService';
+import { getMarketplaceBootstrap, getVehicleById, getClienteById } from '../services/marketplaceService';
 import { crearReservaConSeguimiento } from '../services/eventBus';
-import { getStoredIdCliente, hasActiveSession } from '../services/sessionService';
+import { getStoredCustomerProfile, getStoredIdCliente, hasActiveSession } from '../services/sessionService';
+import { normalizeCustomerProfile } from '../utils/apiHelpers';
 import { colors, radius, shadows, spacing } from '../theme/theme';
 import { calculateRentalDays, formatCurrency, toGraphqlDateTime } from '../utils/formatters';
 import { buildGraphqlExtras, formatGraphqlError } from '../utils/apiHelpers';
@@ -54,6 +55,7 @@ export function CreateReservationScreen({ navigation, route }) {
     descripcion: '',
   });
   const [customer, setCustomer] = useState(initialCustomer);
+  const [customerProfileError, setCustomerProfileError] = useState('');
   const [driver, setDriver] = useState(initialDriver);
   const [extraCounts, setExtraCounts] = useState({});
 
@@ -75,19 +77,61 @@ export function CreateReservationScreen({ navigation, route }) {
   useEffect(() => {
     let mounted = true;
 
-    Promise.all([
-      getVehicleById(vehicleId),
-      getMarketplaceBootstrap({ includeExtras: true }),
-      getStoredIdCliente(),
-    ])
-      .then(([selectedVehicle, bootstrap, storedIdCliente]) => {
+    async function loadReservationData() {
+      try {
+        const [selectedVehicle, bootstrap, storedProfile, storedIdCliente] = await Promise.all([
+          getVehicleById(vehicleId),
+          getMarketplaceBootstrap({ includeExtras: true }),
+          getStoredCustomerProfile(),
+          getStoredIdCliente(),
+        ]);
+
         if (!mounted) return;
+
         setVehicle(selectedVehicle);
         setExtras(bootstrap.extras || []);
         setLocations(bootstrap.localizaciones || []);
-        if (storedIdCliente) {
-          setCustomer((current) => ({ ...current, idCliente: String(storedIdCliente) }));
+
+        let profile = normalizeCustomerProfile({
+          ...(storedProfile || {}),
+          idCliente: storedProfile?.idCliente || storedIdCliente || '',
+        });
+
+        const needsFetch =
+          profile.idCliente &&
+          (!profile.nombres || !profile.apellidos || !profile.numeroIdentificacion);
+
+        if (needsFetch) {
+          try {
+            const fromApi = await getClienteById(profile.idCliente);
+            profile = normalizeCustomerProfile({
+              ...fromApi,
+              ...profile,
+              nombres: profile.nombres || fromApi.nombres,
+              apellidos: profile.apellidos || fromApi.apellidos,
+              correo: profile.correo || fromApi.correo,
+              telefono: profile.telefono || fromApi.telefono,
+              numeroIdentificacion: profile.numeroIdentificacion || fromApi.numeroIdentificacion,
+            });
+          } catch {
+            // Si falla el fetch, usamos lo que haya en sesion.
+          }
         }
+
+        setCustomer(profile);
+
+        if (!profile.idCliente) {
+          setCustomerProfileError(
+            'No encontramos tu perfil de cliente. Cierra sesion e inicia sesion de nuevo.'
+          );
+        } else if (!profile.nombres || !profile.apellidos || !profile.numeroIdentificacion) {
+          setCustomerProfileError(
+            'Tu perfil esta incompleto. Cierra sesion e inicia sesion de nuevo.'
+          );
+        } else {
+          setCustomerProfileError('');
+        }
+
         const pickupId = String(
           localizacionId || selectedVehicle?.idLocalizacion || bootstrap.localizaciones?.[0]?.id || ''
         );
@@ -98,13 +142,17 @@ export function CreateReservationScreen({ navigation, route }) {
           idLocalizacionRecogida: pickupId,
           idLocalizacionEntrega: pickupId,
         }));
-      })
-      .finally(() => mounted && setLoading(false));
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+
+    loadReservationData();
 
     return () => {
       mounted = false;
     };
-  }, [vehicleId]);
+  }, [vehicleId, localizacionId, fechaRecogida, horaRecogida]);
 
   const rentalDays = useMemo(
     () => calculateRentalDays(form.fechaInicio, form.fechaFin),
@@ -134,8 +182,21 @@ export function CreateReservationScreen({ navigation, route }) {
   }, [extraLines, rentalDays, vehicle?.precioPorDia]);
 
   const handleSubmit = async () => {
-    if (!customer.idCliente || !driver.nombres || !driver.apellidos || !driver.numeroIdentificacion) {
-      setMessage('Ingresa un idCliente valido y completa los datos del conductor titular.');
+    if (
+      customerProfileError ||
+      !customer.idCliente ||
+      !customer.nombres ||
+      !customer.apellidos ||
+      !customer.numeroIdentificacion
+    ) {
+      setMessage(
+        customerProfileError || 'No se pudo validar tu perfil de cliente. Inicia sesion de nuevo.'
+      );
+      return;
+    }
+
+    if (!driver.nombres || !driver.apellidos || !driver.numeroIdentificacion) {
+      setMessage('Completa los datos del conductor titular.');
       return;
     }
 
@@ -263,50 +324,42 @@ export function CreateReservationScreen({ navigation, route }) {
       </View>
 
       <View style={styles.panel}>
-        <SectionHeader title="Datos del cliente" subtitle="Mantiene el mismo flujo del marketplace de reserva." />
+        <SectionHeader
+          title="Datos del cliente"
+          subtitle="Datos de tu cuenta registrada. No se pueden modificar aqui."
+        />
+        {customerProfileError ? <Text style={styles.customerError}>{customerProfileError}</Text> : null}
         <View style={styles.formColumn}>
-          <FormField
-            label="ID cliente real"
-            value={customer.idCliente}
-            onChangeText={(value) => setCustomer((current) => ({ ...current, idCliente: value }))}
-            placeholder="1"
-            keyboardType="number-pad"
-          />
           <FormField
             label="Nombres"
             value={customer.nombres}
-            onChangeText={(value) => setCustomer((current) => ({ ...current, nombres: value }))}
             placeholder="Andrea"
+            editable={false}
           />
           <FormField
             label="Apellidos"
             value={customer.apellidos}
-            onChangeText={(value) => setCustomer((current) => ({ ...current, apellidos: value }))}
             placeholder="Lopez"
+            editable={false}
           />
           <FormField
             label="Correo"
             value={customer.correo}
-            onChangeText={(value) => setCustomer((current) => ({ ...current, correo: value }))}
             placeholder="cliente@correo.com"
+            editable={false}
           />
           <FormField
             label="Telefono"
             value={customer.telefono}
-            onChangeText={(value) => setCustomer((current) => ({ ...current, telefono: value }))}
             placeholder="0999999999"
-            keyboardType="phone-pad"
+            editable={false}
           />
           <FormField
             label="Identificacion"
             value={customer.numeroIdentificacion}
-            onChangeText={(value) => setCustomer((current) => ({ ...current, numeroIdentificacion: value }))}
             placeholder="0102030405"
-            keyboardType="number-pad"
+            editable={false}
           />
-          <Text style={styles.helperText}>
-            En este gateway el cliente no viaja completo en GraphQL. La mutation necesita el `idCliente` que ya exista en tu sistema.
-          </Text>
         </View>
       </View>
 
@@ -586,8 +639,8 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginTop: spacing.sm,
   },
-  helperText: {
-    color: colors.textMuted,
+  customerError: {
+    color: colors.red,
     lineHeight: 20,
   },
 });

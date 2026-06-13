@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ChoiceChips } from '../components/ChoiceChips';
 import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { SectionHeader } from '../components/SectionHeader';
+import { SelectField } from '../components/SelectField';
 import { listCiudadesNormalized, getRegisterUrl } from '../services/marketplaceService';
 import { registerAndSaveSession } from '../services/sessionService';
 import { formatApiError } from '../utils/apiHelpers';
@@ -109,6 +110,15 @@ export function RegisterScreen({ navigation }) {
   const identificacionKeyboard =
     form.tipoIdentificacion === 'PASAPORTE' ? 'default' : 'number-pad';
 
+  const ciudadOptions = useMemo(
+    () =>
+      ciudades.map((ciudad) => ({
+        value: ciudad.id,
+        label: ciudad.nombre,
+      })),
+    [ciudades]
+  );
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.card}>
@@ -192,26 +202,15 @@ export function RegisterScreen({ navigation }) {
           onChange={(value) => updateField('genero', value)}
         />
 
-        <View style={styles.fieldBlock}>
-          <Text style={styles.fieldLabel}>Ciudad</Text>
-          <View style={styles.cityList}>
-            {ciudades.map((ciudad) => {
-              const selected = String(form.idCiudad) === ciudad.id;
-              return (
-                <Pressable
-                  key={ciudad.id}
-                  onPress={() => updateField('idCiudad', ciudad.id)}
-                  style={[styles.cityItem, selected ? styles.cityItemSelected : null]}
-                >
-                  <Text style={[styles.cityText, selected ? styles.cityTextSelected : null]}>
-                    {ciudad.nombre}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          {errors.idCiudad ? <Text style={styles.error}>{errors.idCiudad}</Text> : null}
-        </View>
+        <SelectField
+          label="Ciudad"
+          value={form.idCiudad}
+          onValueChange={(value) => updateField('idCiudad', value)}
+          options={ciudadOptions}
+          placeholder="Selecciona tu ciudad"
+          error={errors.idCiudad}
+          disabled={Boolean(loadError) || !ciudades.length}
+        />
 
         <FormField
           label="Telefono"
@@ -279,36 +278,6 @@ const styles = StyleSheet.create({
   backLinkText: {
     color: colors.orange,
     fontWeight: '700',
-  },
-  fieldBlock: {
-    gap: spacing.xs,
-  },
-  fieldLabel: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  cityList: {
-    gap: spacing.sm,
-  },
-  cityItem: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.line,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-  },
-  cityItemSelected: {
-    borderColor: colors.orange,
-    backgroundColor: '#fff4eb',
-  },
-  cityText: {
-    color: colors.textMuted,
-    fontWeight: '600',
-  },
-  cityTextSelected: {
-    color: colors.orange,
   },
   error: {
     color: colors.red,

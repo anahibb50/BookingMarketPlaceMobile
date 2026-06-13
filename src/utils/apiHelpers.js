@@ -36,6 +36,76 @@ export function pickToken(node) {
   return node.token ?? node.Token ?? node.accessToken ?? node.AccessToken ?? '';
 }
 
+export function normalizeCustomerProfile(source = {}) {
+  const idCliente =
+    source.idCliente ??
+    source.IdCliente ??
+    source.id ??
+    source.Id ??
+    '';
+
+  return {
+    idCliente: idCliente === '' ? '' : String(idCliente),
+    nombres:
+      source.nombres ??
+      source.Nombres ??
+      source.nombre ??
+      source.Nombre ??
+      source.nombreCliente ??
+      source.NombreCliente ??
+      '',
+    apellidos:
+      source.apellidos ??
+      source.Apellidos ??
+      source.apellido ??
+      source.Apellido ??
+      source.apellidoCliente ??
+      source.ApellidoCliente ??
+      '',
+    correo: source.correo ?? source.Correo ?? source.email ?? source.Email ?? '',
+    telefono:
+      source.telefono ??
+      source.Telefono ??
+      source.telefonoCliente ??
+      source.TelefonoCliente ??
+      '',
+    numeroIdentificacion:
+      source.numeroIdentificacion ??
+      source.NumeroIdentificacion ??
+      source.identificacion ??
+      source.Identificacion ??
+      '',
+  };
+}
+
+export function extractCustomerProfileFromLoginPayload(payload, registerPayload = null) {
+  const loginData = payload?.usuario ?? payload ?? {};
+  const fromLogin = normalizeCustomerProfile(loginData);
+
+  if (registerPayload) {
+    const fromRegister = normalizeCustomerProfile({
+      nombre: registerPayload.nombre,
+      apellido: registerPayload.apellido,
+      correo: registerPayload.correo,
+      telefono: registerPayload.telefono,
+      identificacion: registerPayload.identificacion,
+      idCliente: fromLogin.idCliente,
+    });
+
+    return normalizeCustomerProfile({
+      ...fromRegister,
+      ...fromLogin,
+      nombres: fromLogin.nombres || fromRegister.nombres,
+      apellidos: fromLogin.apellidos || fromRegister.apellidos,
+      correo: fromLogin.correo || fromRegister.correo,
+      telefono: fromLogin.telefono || fromRegister.telefono,
+      numeroIdentificacion: fromLogin.numeroIdentificacion || fromRegister.numeroIdentificacion,
+    });
+  }
+
+  return fromLogin;
+}
+
 function extractGraphqlErrors(error) {
   if (Array.isArray(error?.graphQLErrors) && error.graphQLErrors.length) {
     return error.graphQLErrors;
