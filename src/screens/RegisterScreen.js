@@ -4,6 +4,7 @@ import { ChoiceChips } from '../components/ChoiceChips';
 import { FormField } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { SectionHeader } from '../components/SectionHeader';
+import { StackScreenHeader } from '../components/StackScreenHeader';
 import { SelectField } from '../components/SelectField';
 import { listCiudadesNormalized, getRegisterUrl } from '../services/marketplaceService';
 import { registerAndSaveSession } from '../services/sessionService';
@@ -120,12 +121,20 @@ export function RegisterScreen({ navigation }) {
   );
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <View style={styles.screen}>
+      <StackScreenHeader
+        title="Crear cuenta"
+        backLabel="Login"
+        onBack={() => {
+          if (navigation.canGoBack()) {
+            navigation.goBack();
+            return;
+          }
+          navigation.navigate('Login');
+        }}
+      />
+      <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.card}>
-        <Pressable onPress={() => navigation.navigate('Login')} style={styles.backLink}>
-          <Text style={styles.backLinkText}>Volver al login</Text>
-        </Pressable>
-
         <SectionHeader
           eyebrow="Cliente"
           title="Crear cuenta"
@@ -251,7 +260,8 @@ export function RegisterScreen({ navigation }) {
           <Text style={styles.marketplaceLink}>Volver al marketplace</Text>
         </Pressable>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 

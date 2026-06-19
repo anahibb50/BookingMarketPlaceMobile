@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, shadows, spacing } from '../theme/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, shadows, spacing } from '../theme/theme';
+
+const HEADER_BAR_HEIGHT = 56;
 
 const MENU_ITEMS = [
   { id: 'explore', label: 'Explorar vehiculos' },
@@ -15,6 +18,7 @@ export function HomeHeader({
   onLogout,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -23,23 +27,30 @@ export function HomeHeader({
     action?.();
   };
 
-  return (
-    <View style={styles.header}>
-      <Text style={styles.appName}>Budget Car</Text>
+  const dropdownTop = insets.top + HEADER_BAR_HEIGHT + spacing.xs;
 
-      <Pressable
-        onPress={() => setMenuOpen((open) => !open)}
-        style={styles.menuButton}
-        accessibilityRole="button"
-        accessibilityLabel="Abrir menu"
-      >
-        <Text style={styles.menuIcon}>☰</Text>
-      </Pressable>
+  return (
+    <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={styles.headerBar}>
+        <View style={styles.headerSide} />
+        <Text style={styles.appName}>Budget Car</Text>
+        <View style={styles.headerSide}>
+          <Pressable
+            onPress={() => setMenuOpen((open) => !open)}
+            style={styles.menuButton}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Abrir menu"
+          >
+            <Text style={styles.menuIcon}>☰</Text>
+          </Pressable>
+        </View>
+      </View>
 
       {menuOpen ? (
         <Modal visible transparent animationType="fade" onRequestClose={closeMenu}>
           <Pressable style={styles.backdrop} onPress={closeMenu}>
-            <View style={styles.dropdownAnchor}>
+            <View style={[styles.dropdownAnchor, { top: dropdownTop }]}>
               <Pressable style={styles.dropdownMenu} onPress={(event) => event.stopPropagation()}>
                 {MENU_ITEMS.map((item) => (
                   <Pressable
@@ -75,25 +86,31 @@ export function HomeHeader({
 
 const styles = StyleSheet.create({
   header: {
-    height: 64,
     backgroundColor: colors.navy,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    position: 'relative',
     zIndex: 10,
   },
+  headerBar: {
+    height: HEADER_BAR_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  headerSide: {
+    width: 48,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
   appName: {
+    flex: 1,
     color: '#fff',
     fontSize: 20,
     fontWeight: '700',
     letterSpacing: 0.4,
+    textAlign: 'center',
   },
   menuButton: {
-    position: 'absolute',
-    right: spacing.md,
-    width: 42,
-    height: 38,
+    width: 44,
+    height: 44,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.25)',
@@ -111,7 +128,6 @@ const styles = StyleSheet.create({
   },
   dropdownAnchor: {
     position: 'absolute',
-    top: 58,
     right: spacing.md,
     alignItems: 'flex-end',
   },

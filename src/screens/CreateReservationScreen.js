@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -58,20 +58,28 @@ export function CreateReservationScreen({ navigation, route }) {
   const [customerProfileError, setCustomerProfileError] = useState('');
   const [driver, setDriver] = useState(initialDriver);
   const [extraCounts, setExtraCounts] = useState({});
+  const loginRedirectedRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
       (async () => {
         const loggedIn = await hasActiveSession();
-        if (!loggedIn && active) {
-          navigation.replace('Login');
+        if (!loggedIn && active && !loginRedirectedRef.current) {
+          loginRedirectedRef.current = true;
+          navigation.navigate('Login', {
+            redirectTo: 'CreateReservation',
+            ...route.params,
+          });
+        }
+        if (loggedIn) {
+          loginRedirectedRef.current = false;
         }
       })();
       return () => {
         active = false;
       };
-    }, [navigation])
+    }, [navigation, route.params])
   );
 
   useEffect(() => {
@@ -446,7 +454,6 @@ export function CreateReservationScreen({ navigation, route }) {
         {sagaStatus ? (
           <View style={styles.sagaBanner}>
             <Text style={styles.sagaTitle}>Estado de la saga</Text>
-            <Text style={styles.sagaText}>CorrelationId: {String(sagaStatus.correlationId || '--')}</Text>
             <Text style={styles.sagaText}>Estado: {String(sagaStatus.estado || '--')}</Text>
             {sagaStatus.codigoReserva ? (
               <Text style={styles.sagaText}>Codigo: {String(sagaStatus.codigoReserva)}</Text>
@@ -482,7 +489,7 @@ export function CreateReservationScreen({ navigation, route }) {
         </View>
         {message ? <Text style={styles.message}>{message}</Text> : null}
         <PrimaryButton
-          label={submitting ? 'Iniciando saga...' : 'Crear reserva por GraphQL'}
+          label={submitting ? 'Creando reserva...' : 'Crear reserva'}
           onPress={handleSubmit}
           disabled={submitting}
         />

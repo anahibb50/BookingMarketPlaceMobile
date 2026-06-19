@@ -53,7 +53,9 @@ export function VehicleDetailScreen({ navigation, route }) {
             <Text style={styles.kpiLabel}>Maletas</Text>
           </View>
           <View style={styles.kpi}>
-            <Text style={styles.kpiValue}>{vehicle.transmision}</Text>
+            <Text style={styles.kpiValue} numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
+              {vehicle.transmision}
+            </Text>
             <Text style={styles.kpiLabel}>Transmision</Text>
           </View>
         </View>
@@ -68,10 +70,7 @@ export function VehicleDetailScreen({ navigation, route }) {
       </View>
 
       <View style={styles.panel}>
-        <Text style={styles.panelTitle}>Que ya queda resuelto en este proyecto</Text>
-        <Text style={styles.panelText}>Reserva desde mobile sin pasar por el backoffice.</Text>
-        <Text style={styles.panelText}>Capa para GraphQL separada de la UI.</Text>
-        <Text style={styles.panelText}>Publicacion de evento al confirmar la reserva.</Text>
+        <Text style={styles.panelTitle}>Listo para reservar</Text>
       </View>
 
       <View style={styles.ctaWrap}>
@@ -138,6 +137,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '900',
     fontSize: 18,
+    lineHeight: 22,
   },
   kpiLabel: {
     color: colors.textMuted,
@@ -153,16 +153,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.navy,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   panelTitle: {
     color: '#fff',
     fontSize: 20,
     fontWeight: '800',
-  },
-  panelText: {
-    color: '#dce3f4',
-    lineHeight: 22,
   },
   ctaWrap: {
     paddingHorizontal: spacing.md,

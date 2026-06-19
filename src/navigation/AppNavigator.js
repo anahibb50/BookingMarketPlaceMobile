@@ -27,8 +27,8 @@ export function AppNavigator() {
       <Stack.Screen name="VehicleDetail" component={VehicleDetailScreen} options={{ title: 'Detalle del vehiculo' }} />
       <Stack.Screen name="CreateReservation" component={CreateReservationScreen} options={{ title: 'Crear reserva' }} />
       <Stack.Screen name="MyReservations" component={MyReservationsScreen} options={{ title: 'Mis reservas' }} />
-      <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Iniciar sesion' }} />
-      <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Crear cuenta' }} />
+      <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

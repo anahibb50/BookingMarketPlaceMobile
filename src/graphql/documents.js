@@ -23,3 +23,15 @@ export const RESERVATION_STATUS_SUBSCRIPTION = gql`
     }
   }
 `;
+
+export const RESERVATION_STATUS_QUERY = gql`
+  query ReservationStatus($correlationId: String!) {
+    estadoReservaActual(correlationId: $correlationId) {
+      correlationId
+      estado
+      codigoReserva
+      motivoFallo
+      total
+    }
+  }
+`;

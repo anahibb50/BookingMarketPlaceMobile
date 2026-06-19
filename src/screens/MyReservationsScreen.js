@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { SectionHeader } from '../components/SectionHeader';
@@ -10,14 +10,19 @@ import { formatCurrency, formatDateLabel } from '../utils/formatters';
 export function MyReservationsScreen({ navigation, route }) {
   const [reservations, setReservations] = useState([]);
   const createdReservationCode = route.params?.createdReservationCode;
+  const loginRedirectedRef = useRef(false);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
       (async () => {
         const loggedIn = await hasActiveSession();
-        if (!loggedIn && active) {
-          navigation.replace('Login');
+        if (!loggedIn && active && !loginRedirectedRef.current) {
+          loginRedirectedRef.current = true;
+          navigation.navigate('Login', { redirectTo: 'MyReservations' });
+        }
+        if (loggedIn) {
+          loginRedirectedRef.current = false;
         }
       })();
       return () => {

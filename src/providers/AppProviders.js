@@ -1,5 +1,6 @@
 import { ApolloProvider } from '@apollo/client';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { apolloClient } from '../services/graphqlClient';
 import { colors } from '../theme/theme';
 
@@ -17,8 +18,10 @@ const navigationTheme = {
 
 export function AppProviders({ children }) {
   return (
-    <ApolloProvider client={apolloClient}>
-      <NavigationContainer theme={navigationTheme}>{children}</NavigationContainer>
-    </ApolloProvider>
+    <SafeAreaProvider>
+      <ApolloProvider client={apolloClient}>
+        <NavigationContainer theme={navigationTheme}>{children}</NavigationContainer>
+      </ApolloProvider>
+    </SafeAreaProvider>
   );
 }

@@ -324,14 +324,6 @@ export function HomeScreen({ navigation, route }) {
             <Text style={styles.infoValue}>24/7</Text>
             <Text style={styles.infoLabel}>Atencion y soporte</Text>
           </View>
-          <View style={styles.infoCard}>
-            <Text style={styles.infoValue}>GraphQL</Text>
-            <Text style={styles.infoLabel}>Gateway listo</Text>
-          </View>
-          <View style={styles.infoCard}>
-            <Text style={styles.infoValue}>Event Bus</Text>
-            <Text style={styles.infoLabel}>Reserva publicada</Text>
-          </View>
         </View>
       </ScrollView>
     </View>
